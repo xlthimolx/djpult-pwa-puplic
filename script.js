@@ -5,6 +5,8 @@ let mediaElementSource = null; // MediaElementSource fuer das zentrale Audio
 let currentAudio = null;
 let volumeLevel = 1.0;
 let fadeIntervalId = null;
+let nowPlaying = { title: "", duration: 0 };
+let nowPlayingEls = { box: null, title: null, eta: null };
 
 const IS_IOS =
   /iPad|iPhone|iPod/.test(navigator.userAgent) ||
@@ -165,13 +167,13 @@ function renderCategories() {
       const btn = document.createElement("button");
       btn.className = `song-button px-4 py-2 text-lg rounded-lg hover:opacity-80 w-full ${cat.color}`;
       btn.textContent = `${song.icon} ${song.display}`;
-      btn.addEventListener("click", () => playAudio(song.url));
+      btn.addEventListener("click", () => playAudio(song.url, song.display));
       container.appendChild(btn);
     });
   });
 }
 
-function playAudio(file) {
+function playAudio(file, displayTitle = "") {
   const el = getAudioElement();
   if (!el) return;
 
@@ -197,9 +199,13 @@ function playAudio(file) {
   }
 
   currentAudio = el;
+  showNowPlaying(displayTitle);
   if (audioCtx && audioCtx.state === "suspended") {
     audioCtx.resume().catch((err) => console.warn("Konnte AudioContext nicht resumieren:", err));
   }
+  el.onloadedmetadata = () => updateNowPlayingDuration(el);
+  el.ontimeupdate = () => updateNowPlayingEta(el);
+  el.onended = () => clearNowPlaying();
   el.play().catch((err) => console.error("Audio-Wiedergabe blockiert oder fehlgeschlagen:", err));
 }
 
@@ -254,6 +260,7 @@ function stopAudio(forceImmediate = false) {
     el.currentTime = 0;
     currentAudio = null;
   }
+  clearNowPlaying();
 }
 
 function setVolume(value) {
@@ -297,12 +304,53 @@ function updateSpecialButtons() {
   });
 }
 
+function showNowPlaying(title = "") {
+  const { box, title: t, eta } = nowPlayingEls;
+  nowPlaying.title = title || "Playing";
+  if (t) t.textContent = nowPlaying.title;
+  if (eta) eta.textContent = "--:--";
+  if (box) box.classList.remove("hidden");
+}
+
+function updateNowPlayingDuration(el) {
+  nowPlaying.duration = el && isFinite(el.duration) ? el.duration : 0;
+  updateNowPlayingEta(el);
+}
+
+function updateNowPlayingEta(el) {
+  const { eta } = nowPlayingEls;
+  if (!eta || !el) return;
+  const remaining = (el.duration || 0) - (el.currentTime || 0);
+  eta.textContent = formatTime(remaining);
+}
+
+function clearNowPlaying() {
+  const { box, eta } = nowPlayingEls;
+  nowPlaying = { title: "", duration: 0 };
+  if (eta) eta.textContent = "--:--";
+  if (box) box.classList.add("hidden");
+}
+
+function formatTime(sec) {
+  if (!isFinite(sec) || sec < 0) return "--:--";
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60)
+    .toString()
+    .padStart(2, "0");
+  return `${m}:${s}`;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   audioEl = getAudioElement();
   if (audioEl) {
     audioEl.preload = "none";
     audioEl.setAttribute("playsinline", "true");
   }
+  nowPlayingEls = {
+    box: document.getElementById("now-playing"),
+    title: document.getElementById("now-playing-title"),
+    eta: document.getElementById("now-playing-eta"),
+  };
 
   const fileInput = document.getElementById("filepicker");
   const loadButton = document.getElementById("load-songs-btn");
@@ -321,7 +369,7 @@ document.addEventListener("DOMContentLoaded", () => {
     btn.addEventListener("click", () => {
       const track = specialTracks[key];
       if (track && track.url) {
-        playAudio(track.url);
+        playAudio(track.url, track.display || label);
       } else {
         alert(`Kein ${label}-Track geladen.`);
       }
