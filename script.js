@@ -8,6 +8,7 @@ let fadeIntervalId = null;
 let nowPlaying = { title: "", duration: 0 };
 let nowPlayingEls = { box: null, title: null, eta: null };
 const NOW_PLAYING_WARNING_THRESHOLD = 10; // Sekunden
+let songPlayCounts = {};
 let zoomLevel = 1;
 const ZOOM_MIN = 0.8;
 const ZOOM_MAX = 1.2;
@@ -19,11 +20,11 @@ const IS_IOS =
   (navigator.userAgent.includes("Mac") && "ontouchend" in document);
 
 const categories = {
-  ass_angriff: { title: "Ass/Angriff", color: "bg-blue-600", items: [] },
-  block: { title: "Block", color: "bg-pink-600", items: [] },
-  gegner: { title: "Gegner", color: "bg-red-600", items: [] },
-  sonstiges: { title: "_", color: "bg-green-600", items: [] },
-  noch_mehr: { title: "_", color: "bg-green-600", items: [] },
+  ass_angriff: { title: "Ass/Angriff", color: "bg-blue-600", baseHSL: [217, 83, 57], items: [] }, // Tailwind blue-600
+  block: { title: "Block", color: "bg-pink-600", baseHSL: [336, 81, 62], items: [] }, // Tailwind pink-600
+  gegner: { title: "Gegner", color: "bg-red-600", baseHSL: [0, 72, 52], items: [] }, // Tailwind red-600
+  sonstiges: { title: "_", color: "bg-green-600", baseHSL: [142, 71, 45], items: [] }, // Tailwind green-600
+  noch_mehr: { title: "_", color: "bg-green-600", baseHSL: [142, 71, 45], items: [] }, // Tailwind green-600
   spass: { title: "Lustig", color: "bg-purple-600", items: [] },
 };
 
@@ -113,6 +114,7 @@ function handleFiles(fileList) {
       name: file.name,
       display: cleanName(file.name),
       icon: icons[key],
+      category: key,
       url: URL.createObjectURL(file),
     });
   });
@@ -169,17 +171,54 @@ function renderCategories() {
     `;
     grid.appendChild(col);
     const container = col.querySelector(`#col-${key}`);
+    const isHeatmapCategory = ["ass_angriff", "block", "gegner", "sonstiges", "noch_mehr"].includes(
+      key
+    );
+
+    let minCount = Infinity;
+    let maxCount = -Infinity;
+    if (isHeatmapCategory) {
+      cat.items.forEach((song) => {
+        const count = songPlayCounts[song.name] || 0;
+        if (count < minCount) minCount = count;
+        if (count > maxCount) maxCount = count;
+      });
+      if (minCount === Infinity) minCount = 0;
+      if (maxCount === -Infinity) maxCount = 0;
+    }
+
     cat.items.forEach((song) => {
       const btn = document.createElement("button");
-      btn.className = `song-button px-4 py-2 text-lg rounded-lg hover:opacity-80 w-full ${cat.color}`;
+      btn.className = `song-button px-4 py-2 text-lg rounded-lg hover:opacity-80 w-full ${cat.color} relative`;
+
+      if (isHeatmapCategory && cat.baseHSL) {
+        const count = songPlayCounts[song.name] || 0;
+        let intensity = 0;
+        if (maxCount !== minCount) {
+          intensity = (count - minCount) / (maxCount - minCount);
+        }
+        const [h, s, l] = cat.baseHSL;
+        const lightness = Math.min(90, l + intensity * 12);
+        btn.style.backgroundColor = `hsl(${h}, ${s}%, ${lightness}%)`;
+      }
+
       btn.textContent = `${song.icon} ${song.display}`;
-      btn.addEventListener("click", () => playAudio(song.url, song.display));
+      btn.addEventListener("click", () => playAudio(song.url, song.display, song.category));
+
+      if (isHeatmapCategory) {
+        const badge = document.createElement("div");
+        badge.className =
+          "absolute top-1 right-1 text-[10px] bg-black bg-opacity-60 px-1 rounded";
+        badge.textContent = (songPlayCounts[song.name] || 0).toString();
+        btn.appendChild(badge);
+      }
+
       container.appendChild(btn);
     });
   });
 }
 
-function playAudio(file, displayTitle = "") {
+function playAudio(file, displayTitle = "", categoryKey = null) {
   const el = getAudioElement();
   if (!el) return;
 
@@ -205,6 +244,7 @@ function playAudio(file, displayTitle = "") {
   }
 
   currentAudio = el;
+  incrementPlayCount(displayTitle || file, categoryKey);
   showNowPlaying(displayTitle);
   if (audioCtx && audioCtx.state === "suspended") {
     audioCtx.resume().catch((err) => console.warn("Konnte AudioContext nicht resumieren:", err));
@@ -396,6 +436,7 @@ document.addEventListener("DOMContentLoaded", () => {
   bindSpecial(btnPause2, "pause2", "Pause 2");
 
   updateSpecialButtons();
+  loadPlayCounts();
 });
 
 function toggleNowPlayingWarning(remainingSeconds) {
@@ -406,6 +447,84 @@ function toggleNowPlayingWarning(remainingSeconds) {
   } else {
     box.classList.remove("now-playing-warning");
   }
+}
+
+function incrementPlayCount(id, categoryKey) {
+  if (!categoryKey || ["spass"].includes(categoryKey)) return;
+  songPlayCounts[id] = (songPlayCounts[id] || 0) + 1;
+  savePlayCounts();
+  renderSingleCategory(categoryKey);
+}
+
+function savePlayCounts() {
+  try {
+    localStorage.setItem("songPlayCounts", JSON.stringify(songPlayCounts));
+  } catch (e) {
+    console.warn("Konnte songPlayCounts nicht speichern:", e);
+  }
+}
+
+function loadPlayCounts() {
+  try {
+    const data = localStorage.getItem("songPlayCounts");
+    if (data) {
+      songPlayCounts = JSON.parse(data);
+    }
+  } catch (e) {
+    console.warn("Konnte songPlayCounts nicht laden:", e);
+  }
+}
+
+function renderSingleCategory(key) {
+  const cat = categories[key];
+  if (!cat) return;
+  const container = document.querySelector(`#col-${key}`);
+  if (!container) return;
+  container.innerHTML = "";
+
+  const isHeatmapCategory = ["ass_angriff", "block", "gegner", "sonstiges", "noch_mehr"].includes(
+    key
+  );
+
+  let minCount = Infinity;
+  let maxCount = -Infinity;
+  if (isHeatmapCategory) {
+    cat.items.forEach((song) => {
+      const count = songPlayCounts[song.name] || 0;
+      if (count < minCount) minCount = count;
+      if (count > maxCount) maxCount = count;
+    });
+    if (minCount === Infinity) minCount = 0;
+    if (maxCount === -Infinity) maxCount = 0;
+  }
+
+  cat.items.forEach((song) => {
+    const btn = document.createElement("button");
+    btn.className = `song-button px-4 py-2 text-lg rounded-lg hover:opacity-80 w-full ${cat.color} relative`;
+
+    if (isHeatmapCategory && cat.baseHSL) {
+      const count = songPlayCounts[song.name] || 0;
+      let intensity = 0;
+      if (maxCount !== minCount) {
+        intensity = (count - minCount) / (maxCount - minCount);
+      }
+      const [h, s, l] = cat.baseHSL;
+      const lightness = Math.min(90, l + intensity * 12);
+      btn.style.backgroundColor = `hsl(${h}, ${s}%, ${lightness}%)`;
+    }
+
+    btn.textContent = `${song.icon} ${song.display}`;
+    btn.addEventListener("click", () => playAudio(song.url, song.display, song.category));
+
+    if (isHeatmapCategory) {
+      const badge = document.createElement("div");
+      badge.className = "absolute top-1 right-1 text-[10px] bg-black bg-opacity-60 px-1 rounded";
+      badge.textContent = (songPlayCounts[song.name] || 0).toString();
+      btn.appendChild(badge);
+    }
+
+    container.appendChild(btn);
+  });
 }
 
 function initZoomControls() {
