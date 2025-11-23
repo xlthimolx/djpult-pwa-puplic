@@ -218,42 +218,40 @@ function stopAudio(forceImmediate = false) {
   const canGainFade = !!gainNode;
   const shouldFade = !forceImmediate;
 
-  // Sanfter Fade mit kleinem Rest-Epsilon, dann Stop
-  const stopClean = () => {
-    el.pause();
-    el.currentTime = 0;
-    currentAudio = null;
-    if (gainNode) gainNode.gain.value = volumeLevel;
-  };
-
-  if (shouldFade && canGainFade && audioCtx) {
-    const epsilon = 0.001;
-    const now = audioCtx.currentTime;
-    const startGain = Math.max(gainNode.gain.value || volumeLevel || 1, epsilon);
-    gainNode.gain.cancelScheduledValues(now);
-    gainNode.gain.setValueAtTime(startGain, now);
-    // Exponentieller Ramp klingt am Ende weicher
-    gainNode.gain.exponentialRampToValueAtTime(epsilon, now + fadeOutTime / 1000);
-    setTimeout(() => {
-      stopClean();
-      gainNode.gain.value = volumeLevel;
-    }, fadeOutTime + 50);
-  } else if (shouldFade && !IS_IOS) {
-    const epsilon = 0.01;
-    const initialVolume = el.volume > 0 ? el.volume : volumeLevel || 1;
-    const volumeStep = (initialVolume - epsilon) / fadeSteps;
+  if (shouldFade && canGainFade) {
+    const startGain = gainNode.gain.value || volumeLevel || 1;
+    const gainStep = startGain / fadeSteps;
     fadeIntervalId = setInterval(() => {
-      if (el.volume > epsilon + volumeStep) {
+      const next = gainNode.gain.value - gainStep;
+      if (next > 0) {
+        gainNode.gain.value = next;
+      } else {
+        clearInterval(fadeIntervalId);
+        fadeIntervalId = null;
+        gainNode.gain.value = volumeLevel; // reset fuer naechsten Start
+        el.pause();
+        el.currentTime = 0;
+        currentAudio = null;
+      }
+    }, fadeInterval);
+  } else if (shouldFade && !IS_IOS) {
+    const initialVolume = el.volume > 0 ? el.volume : volumeLevel || 1;
+    const volumeStep = initialVolume / fadeSteps;
+    fadeIntervalId = setInterval(() => {
+      if (el.volume > volumeStep) {
         el.volume -= volumeStep;
       } else {
         clearInterval(fadeIntervalId);
         fadeIntervalId = null;
-        el.volume = epsilon;
-        stopClean();
+        el.pause();
+        el.currentTime = 0;
+        currentAudio = null;
       }
     }, fadeInterval);
   } else {
-    stopClean();
+    el.pause();
+    el.currentTime = 0;
+    currentAudio = null;
   }
 }
 
