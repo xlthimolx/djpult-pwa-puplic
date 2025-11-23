@@ -11,7 +11,7 @@ const NOW_PLAYING_WARNING_THRESHOLD = 10; // Sekunden
 let zoomLevel = 1;
 const ZOOM_MIN = 0.8;
 const ZOOM_MAX = 1.2;
-const ZOOM_STEP = 0.1;
+const ZOOM_STEP = 0.05;
 let zoomEls = { level: null, inBtn: null, outBtn: null };
 
 const IS_IOS =
