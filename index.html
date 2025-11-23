@@ -9,21 +9,28 @@
   <link rel="manifest" href="manifest.json">
 </head>
 <body class="flex h-screen bg-gray-900 text-white">
-  <div class="w-full flex flex-col p-6 overflow-y-auto pb-40">
-    <div class="flex items-center justify-center mb-6">
-      <h1 class="text-4xl font-bold mr-4">DJ Pult</h1>
-      <img src="static/images/thumbnail_logo.png" alt="logo" class="h-15 w-12 shadow-lg" />
-    </div>
-    <!-- Now Playing Banner -->
-    <div id="now-playing" class="fixed top-2 right-2 bg-gray-800 text-white text-sm px-3 py-2 rounded-md shadow hidden w-72 max-w-sm">
-      <div id="now-playing-title" class="font-semibold truncate">--</div>
-      <div id="now-playing-eta" class="text-xs text-gray-300">--:--</div>
-    </div>
-    <div class="flex items-center justify-center mb-4 space-x-3">
-      <button id="load-songs-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg">
-        Songs laden
-      </button>
-      <input id="filepicker" type="file" class="hidden" accept="audio/*" multiple webkitdirectory />
+    <div class="w-full flex flex-col p-6 overflow-y-auto pb-40">
+      <div class="flex items-center justify-center mb-6">
+        <h1 class="text-4xl font-bold mr-4">DJ Pult</h1>
+        <img src="static/images/thumbnail_logo.png" alt="logo" class="h-15 w-12 shadow-lg" />
+      </div>
+      <!-- Now Playing Banner -->
+      <div id="now-playing" class="fixed top-2 right-2 bg-gray-800 text-white text-sm px-3 py-2 rounded-md shadow hidden w-72 max-w-sm">
+        <div id="now-playing-title" class="font-semibold truncate">--</div>
+        <div id="now-playing-eta" class="text-xs text-gray-300">--:--</div>
+      </div>
+      <!-- Zoom Controls -->
+      <div class="fixed top-2 left-2 bg-gray-800 text-white text-sm px-3 py-2 rounded-md shadow flex items-center space-x-2">
+        <span>Zoom</span>
+        <button id="zoom-out" class="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded">-</button>
+        <span id="zoom-level" class="w-10 text-center">100%</span>
+        <button id="zoom-in" class="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded">+</button>
+      </div>
+      <div class="flex items-center justify-center mb-4 space-x-3">
+        <button id="load-songs-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg">
+          Songs laden
+        </button>
+        <input id="filepicker" type="file" class="hidden" accept="audio/*" multiple webkitdirectory />
     </div>
 
     <!-- Song-Kategorien (werden per JS gefüllt) -->

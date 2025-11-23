@@ -8,6 +8,11 @@ let fadeIntervalId = null;
 let nowPlaying = { title: "", duration: 0 };
 let nowPlayingEls = { box: null, title: null, eta: null };
 const NOW_PLAYING_WARNING_THRESHOLD = 10; // Sekunden
+let zoomLevel = 1;
+const ZOOM_MIN = 0.8;
+const ZOOM_MAX = 1.2;
+const ZOOM_STEP = 0.1;
+let zoomEls = { level: null, inBtn: null, outBtn: null };
 
 const IS_IOS =
   /iPad|iPhone|iPod/.test(navigator.userAgent) ||
@@ -354,6 +359,12 @@ document.addEventListener("DOMContentLoaded", () => {
     title: document.getElementById("now-playing-title"),
     eta: document.getElementById("now-playing-eta"),
   };
+  zoomEls = {
+    level: document.getElementById("zoom-level"),
+    inBtn: document.getElementById("zoom-in"),
+    outBtn: document.getElementById("zoom-out"),
+  };
+  initZoomControls();
 
   const fileInput = document.getElementById("filepicker");
   const loadButton = document.getElementById("load-songs-btn");
@@ -394,5 +405,26 @@ function toggleNowPlayingWarning(remainingSeconds) {
     box.classList.add("now-playing-warning");
   } else {
     box.classList.remove("now-playing-warning");
+  }
+}
+
+function initZoomControls() {
+  const { level, inBtn, outBtn } = zoomEls;
+  const applyZoom = () => {
+    document.documentElement.style.fontSize = `${16 * zoomLevel}px`;
+    if (level) level.textContent = `${Math.round(zoomLevel * 100)}%`;
+  };
+  applyZoom();
+  if (inBtn) {
+    inBtn.addEventListener("click", () => {
+      zoomLevel = Math.min(ZOOM_MAX, parseFloat((zoomLevel + ZOOM_STEP).toFixed(2)));
+      applyZoom();
+    });
+  }
+  if (outBtn) {
+    outBtn.addEventListener("click", () => {
+      zoomLevel = Math.max(ZOOM_MIN, parseFloat((zoomLevel - ZOOM_STEP).toFixed(2)));
+      applyZoom();
+    });
   }
 }
