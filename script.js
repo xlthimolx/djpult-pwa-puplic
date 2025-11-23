@@ -69,6 +69,7 @@ function resetCategories() {
 }
 
 function handleFiles(fileList) {
+  loadPlayCounts();
   resetCategories();
   const files = Array.from(fileList || []);
   let toggle = 0;
@@ -204,7 +205,10 @@ function renderCategories() {
       }
 
       btn.textContent = `${song.icon} ${song.display}`;
-      btn.addEventListener("click", () => playAudio(song.url, song.display, song.category, song.id));
+      btn.addEventListener("click", () => {
+        console.log("Song click", { id: song.id, category: song.category });
+        playAudio(song.url, song.display, song.category, song.id);
+      });
 
       if (isHeatmapCategory) {
         const badge = document.createElement("div");
@@ -492,7 +496,7 @@ function renderSingleCategory(key) {
   let maxCount = -Infinity;
   if (isHeatmapCategory) {
     cat.items.forEach((song) => {
-      const count = songPlayCounts[song.name] || 0;
+      const count = songPlayCounts[song.id] || 0;
       if (count < minCount) minCount = count;
       if (count > maxCount) maxCount = count;
     });
@@ -505,7 +509,7 @@ function renderSingleCategory(key) {
     btn.className = `song-button px-4 py-2 text-lg rounded-lg hover:opacity-80 w-full ${cat.color} relative`;
 
     if (isHeatmapCategory && cat.baseHSL) {
-      const count = songPlayCounts[song.name] || 0;
+      const count = songPlayCounts[song.id] || 0;
       let intensity = 0;
       if (maxCount !== minCount) {
         intensity = (count - minCount) / (maxCount - minCount);
@@ -516,12 +520,15 @@ function renderSingleCategory(key) {
     }
 
     btn.textContent = `${song.icon} ${song.display}`;
-    btn.addEventListener("click", () => playAudio(song.url, song.display, song.category));
+    btn.addEventListener("click", () => {
+      console.log("Song click", { id: song.id, category: song.category });
+      playAudio(song.url, song.display, song.category, song.id);
+    });
 
     if (isHeatmapCategory) {
       const badge = document.createElement("div");
       badge.className = "absolute top-1 right-1 text-[10px] bg-black bg-opacity-60 px-1 rounded";
-      badge.textContent = (songPlayCounts[song.name] || 0).toString();
+      badge.textContent = (songPlayCounts[song.id] || 0).toString();
       btn.appendChild(badge);
     }
 
