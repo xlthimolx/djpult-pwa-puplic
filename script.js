@@ -111,6 +111,7 @@ function handleFiles(fileList) {
     }
 
     categories[key].items.push({
+      id: file.name, // stabile ID fuer Counter/Storage
       name: file.name,
       display: cleanName(file.name),
       icon: icons[key],
@@ -179,7 +180,7 @@ function renderCategories() {
     let maxCount = -Infinity;
     if (isHeatmapCategory) {
       cat.items.forEach((song) => {
-        const count = songPlayCounts[song.name] || 0;
+        const count = songPlayCounts[song.id] || 0;
         if (count < minCount) minCount = count;
         if (count > maxCount) maxCount = count;
       });
@@ -192,7 +193,7 @@ function renderCategories() {
       btn.className = `song-button px-4 py-2 text-lg rounded-lg hover:opacity-80 w-full ${cat.color} relative`;
 
       if (isHeatmapCategory && cat.baseHSL) {
-        const count = songPlayCounts[song.name] || 0;
+        const count = songPlayCounts[song.id] || 0;
         let intensity = 0;
         if (maxCount !== minCount) {
           intensity = (count - minCount) / (maxCount - minCount);
@@ -203,13 +204,13 @@ function renderCategories() {
       }
 
       btn.textContent = `${song.icon} ${song.display}`;
-      btn.addEventListener("click", () => playAudio(song.url, song.display, song.category));
+      btn.addEventListener("click", () => playAudio(song.url, song.display, song.category, song.id));
 
       if (isHeatmapCategory) {
         const badge = document.createElement("div");
         badge.className =
           "absolute top-1 right-1 text-[10px] bg-black bg-opacity-60 px-1 rounded";
-        badge.textContent = (songPlayCounts[song.name] || 0).toString();
+        badge.textContent = (songPlayCounts[song.id] || 0).toString();
         btn.appendChild(badge);
       }
 
@@ -218,7 +219,7 @@ function renderCategories() {
   });
 }
 
-function playAudio(file, displayTitle = "", categoryKey = null) {
+function playAudio(file, displayTitle = "", categoryKey = null, songId = null) {
   const el = getAudioElement();
   if (!el) return;
 
@@ -244,7 +245,7 @@ function playAudio(file, displayTitle = "", categoryKey = null) {
   }
 
   currentAudio = el;
-  incrementPlayCount(displayTitle || file, categoryKey);
+  incrementPlayCount(songId || displayTitle || file, categoryKey);
   showNowPlaying(displayTitle);
   if (audioCtx && audioCtx.state === "suspended") {
     audioCtx.resume().catch((err) => console.warn("Konnte AudioContext nicht resumieren:", err));
@@ -452,6 +453,7 @@ function toggleNowPlayingWarning(remainingSeconds) {
 function incrementPlayCount(id, categoryKey) {
   if (!categoryKey || ["spass"].includes(categoryKey)) return;
   songPlayCounts[id] = (songPlayCounts[id] || 0) + 1;
+  console.log("Increment", { id, categoryKey, value: songPlayCounts[id] });
   savePlayCounts();
   renderSingleCategory(categoryKey);
 }
