@@ -25,6 +25,7 @@ const categories = {
   gegner: { title: "Gegner", color: "bg-red-600", baseHSL: [0, 72, 52], items: [] }, // Tailwind red-600
   sonstiges: { title: "_", color: "bg-green-600", baseHSL: [142, 71, 45], items: [] }, // Tailwind green-600
   noch_mehr: { title: "_", color: "bg-green-600", baseHSL: [142, 71, 45], items: [] }, // Tailwind green-600
+  noch_mehr2: { title: "_", color: "bg-green-600", baseHSL: [142, 71, 45], items: [] }, // Tailwind green-600
   spass: { title: "Lustig", color: "bg-purple-600", items: [] },
 };
 
@@ -35,6 +36,7 @@ const icons = {
   spass: "\uD83C\uDF89",
   sonstiges: "\uD83C\uDFB5",
   noch_mehr: "\uD83C\uDFB5",
+  noch_mehr2: "\uD83C\uDFB5",
 };
 
 const specialTracks = {
@@ -107,7 +109,8 @@ function handleFiles(fileList) {
     else if (upper.includes("_OPP")) key = "gegner";
     else if (upper.includes("_FUN")) key = "spass";
     else {
-      key = toggle % 2 === 0 ? "sonstiges" : "noch_mehr";
+      const miscKeys = ["sonstiges", "noch_mehr", "noch_mehr2"];
+      key = miscKeys[toggle % miscKeys.length];
       toggle += 1;
     }
 
@@ -173,7 +176,7 @@ function renderCategories() {
     `;
     grid.appendChild(col);
     const container = col.querySelector(`#col-${key}`);
-    const isHeatmapCategory = ["ass_angriff", "block", "gegner", "sonstiges", "noch_mehr"].includes(
+    const isHeatmapCategory = ["ass_angriff", "block", "gegner", "sonstiges", "noch_mehr", "noch_mehr2"].includes(
       key
     );
 
@@ -487,7 +490,7 @@ function renderSingleCategory(key) {
   if (!container) return;
   container.innerHTML = "";
 
-  const isHeatmapCategory = ["ass_angriff", "block", "gegner", "sonstiges", "noch_mehr"].includes(
+  const isHeatmapCategory = ["ass_angriff", "block", "gegner", "sonstiges", "noch_mehr", "noch_mehr2"].includes(
     key
   );
 
