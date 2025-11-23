@@ -36,6 +36,7 @@ const icons = {
   spass: "\uD83C\uDF89",
   sonstiges: "\uD83C\uDFB5",
   noch_mehr: "\uD83C\uDFB5",
+  noch_mehr2: "\uD83C\uDFB5",
 };
 
 const specialTracks = {
