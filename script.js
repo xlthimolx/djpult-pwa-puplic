@@ -564,5 +564,6 @@ function initZoomControls() {
 function resetPlayCounts() {
   songPlayCounts = {};
   savePlayCounts();
+  console.log("Reset play counts");
   renderCategories();
 }
