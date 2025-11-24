@@ -590,9 +590,9 @@ function playRandomTrack() {
     if (!cat || !cat.items || cat.items.length === 0) return;
     cat.items.forEach((song) => {
       const count = songPlayCounts[song.id] || 0;
-      // Stärkere Gewichtung: weniger gespielte Titel werden deutlich bevorzugt
-      // Gewicht = 1 / (1 + count)^2, Mindestgewicht 0.02
-      const weight = Math.max(0.02, 1 / Math.pow(1 + count, 2));
+      // Noch staerkere Gewichtung: selten gespielte Titel werden deutlich bevorzugt
+      // Gewicht = 1 / (1 + count)^3, Mindestgewicht 0.01
+      const weight = Math.max(0.01, 1 / Math.pow(1 + count, 3));
       pool.push({ song, category: key, weight });
     });
   });
