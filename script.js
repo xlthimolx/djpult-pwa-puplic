@@ -14,6 +14,7 @@ const ZOOM_MIN = 0.8;
 const ZOOM_MAX = 1.2;
 const ZOOM_STEP = 0.05;
 let zoomEls = { level: null, inBtn: null, outBtn: null };
+let infoEls = { panel: null, toggle: null };
 
 const IS_IOS =
   /iPad|iPhone|iPod/.test(navigator.userAgent) ||
@@ -406,6 +407,10 @@ document.addEventListener("DOMContentLoaded", () => {
     title: document.getElementById("now-playing-title"),
     eta: document.getElementById("now-playing-eta"),
   };
+  infoEls = {
+    panel: document.getElementById("info-panel"),
+    toggle: document.getElementById("info-toggle"),
+  };
   zoomEls = {
     level: document.getElementById("zoom-level"),
     inBtn: document.getElementById("zoom-in"),
@@ -569,4 +574,42 @@ function resetPlayCounts() {
   savePlayCounts();
   console.log("Reset play counts");
   renderCategories();
+}
+
+function toggleInfo() {
+  const panel = infoEls.panel || document.getElementById("info-panel");
+  if (!panel) return;
+  panel.classList.toggle("hidden");
+}
+
+function playRandomTrack() {
+  const candidateCategories = ["ass_angriff", "block", "sonstiges", "noch_mehr", "noch_mehr2"];
+  const pool = [];
+  candidateCategories.forEach((key) => {
+    const cat = categories[key];
+    if (!cat || !cat.items || cat.items.length === 0) return;
+    cat.items.forEach((song) => {
+      const count = songPlayCounts[song.id] || 0;
+      // Noch staerkere Gewichtung: selten gespielte Titel werden deutlich bevorzugt
+      // Gewicht = 1 / (1 + count)^3, Mindestgewicht 0.01
+      const weight = Math.max(0.01, 1 / Math.pow(1 + count, 3));
+      pool.push({ song, category: key, weight });
+    });
+  });
+  if (pool.length === 0) {
+    alert("Keine Songs in den zufaelligen Kategorien geladen.");
+    return;
+  }
+  const totalWeight = pool.reduce((sum, item) => sum + item.weight, 0);
+  const r = Math.random() * totalWeight;
+  let acc = 0;
+  let chosen = pool[0];
+  for (const item of pool) {
+    acc += item.weight;
+    if (r <= acc) {
+      chosen = item;
+      break;
+    }
+  }
+  playAudio(chosen.song.url, chosen.song.display, chosen.category, chosen.song.id);
 }
