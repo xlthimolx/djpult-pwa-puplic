@@ -620,6 +620,7 @@ function collapseHeader() {
     headerEls.toggle.textContent = "Kopf einblenden";
     headerEls.toggle.dataset.collapsed = "true";
   }
+  document.body.classList.add("header-collapsed");
 }
 
 function toggleHeaderVisibility() {
@@ -630,6 +631,7 @@ function toggleHeaderVisibility() {
     headerEls.toggle.textContent = hidden ? "Kopf einblenden" : "Kopf ausblenden";
     headerEls.toggle.dataset.collapsed = hidden ? "true" : "false";
   }
+  document.body.classList.toggle("header-collapsed", hidden);
 }
 
 function renderPauseButtons() {

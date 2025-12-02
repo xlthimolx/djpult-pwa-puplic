@@ -42,6 +42,10 @@ body {
   display: none;
 }
 
+.header-collapsed #categories-grid {
+  margin-top: 40px;
+}
+
 .category-col {
   height: 100%;
 }
