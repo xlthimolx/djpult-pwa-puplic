@@ -180,9 +180,11 @@ function renderCategories() {
   let totalMatches = 0;
   Object.entries(categories).forEach(([key, cat]) => {
     const col = document.createElement("div");
+    col.classList.add("category-col");
+    col.setAttribute("data-category", key);
     col.innerHTML = `
       <h2 class="text-xl font-bold mb-2 text-center">${cat.title}</h2>
-      <div class="flex flex-col space-y-2" id="col-${key}"></div>
+      <div class="flex flex-col space-y-2 category-list" id="col-${key}" data-category="${key}"></div>
     `;
     grid.appendChild(col);
     const container = col.querySelector(`#col-${key}`);
@@ -619,6 +621,29 @@ function renderPauseButtons() {
       playAudio(track.url, label);
     });
     container.appendChild(btn);
+  });
+}
+
+function initCategoryScrollSync() {
+  const miscKeys = new Set(["sonstiges", "noch_mehr", "noch_mehr2"]);
+  let isSyncing = false;
+  const miscLists = Array.from(document.querySelectorAll(".category-list")).filter((el) =>
+    miscKeys.has(el.dataset.category)
+  );
+
+  miscLists.forEach((el) => {
+    el.onscroll = null;
+    el.addEventListener("scroll", () => {
+      if (isSyncing) return;
+      isSyncing = true;
+      const target = el.scrollTop;
+      miscLists.forEach((other) => {
+        if (other !== el) {
+          other.scrollTop = target;
+        }
+      });
+      isSyncing = false;
+    });
   });
 }
 

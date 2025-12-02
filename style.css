@@ -36,3 +36,13 @@ body {
   color: #0f172a;
   background-color: #fef3c7 !important;
 }
+
+.category-col {
+  height: 100%;
+}
+
+.category-list {
+  max-height: calc(100vh - 260px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
