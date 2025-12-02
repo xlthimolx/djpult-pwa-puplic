@@ -613,7 +613,7 @@ function renderPauseButtons() {
     const base = track.display || `Pause ${track.number || idx + 1}`;
     const label = `Pause: ${base}`;
     const btn = document.createElement("button");
-    btn.className = "bg-orange-500 rounded-lg hover:bg-yellow-700 text-xl px-3 py-3";
+    btn.className = "bg-orange-500 rounded-lg hover:bg-yellow-700 text-xl px-3 py-3 w-full";
     btn.textContent = label;
     btn.addEventListener("click", () => {
       playAudio(track.url, label);
