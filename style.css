@@ -38,6 +38,10 @@ body {
   background-color: #fef3c7 !important;
 }
 
+.header-hidden {
+  display: none;
+}
+
 .category-col {
   height: 100%;
 }

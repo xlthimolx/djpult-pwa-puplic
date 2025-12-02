@@ -17,6 +17,7 @@ let zoomEls = { level: null, inBtn: null, outBtn: null };
 let infoEls = { panel: null, toggle: null };
 let searchTerm = "";
 let searchEls = { input: null, count: null };
+let headerEls = { block: null, toggle: null };
 
 const IS_IOS =
   /iPad|iPhone|iPod/.test(navigator.userAgent) ||
@@ -135,6 +136,7 @@ function handleFiles(fileList) {
 
   renderCategories();
   updateSpecialButtons();
+  collapseHeader();
 }
 
 function getAudioElement() {
@@ -426,6 +428,10 @@ document.addEventListener("DOMContentLoaded", () => {
     title: document.getElementById("now-playing-title"),
     eta: document.getElementById("now-playing-eta"),
   };
+  headerEls = {
+    block: document.getElementById("header-block"),
+    toggle: document.getElementById("toggle-header"),
+  };
   infoEls = {
     panel: document.getElementById("info-panel"),
     toggle: document.getElementById("info-toggle"),
@@ -451,6 +457,9 @@ document.addEventListener("DOMContentLoaded", () => {
   if (loadButton && fileInput) {
     loadButton.addEventListener("click", () => fileInput.click());
     fileInput.addEventListener("change", (event) => handleFiles(event.target.files));
+  }
+  if (headerEls.toggle) {
+    headerEls.toggle.addEventListener("click", toggleHeaderVisibility);
   }
 
   const bindSpecial = (btn, key, label) => {
@@ -601,6 +610,22 @@ function resetPlayCounts() {
   savePlayCounts();
   console.log("Reset play counts");
   renderCategories();
+}
+
+function collapseHeader() {
+  if (!headerEls.block) return;
+  headerEls.block.classList.add("header-hidden");
+  if (headerEls.toggle) {
+    headerEls.toggle.textContent = "Kopf einblenden";
+  }
+}
+
+function toggleHeaderVisibility() {
+  if (!headerEls.block) return;
+  const hidden = headerEls.block.classList.toggle("header-hidden");
+  if (headerEls.toggle) {
+    headerEls.toggle.textContent = hidden ? "Kopf einblenden" : "Kopf ausblenden";
+  }
 }
 
 function renderPauseButtons() {
